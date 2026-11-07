@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0f766e">
+<title>Depas Trujillo</title>
+<style>
+:root {
+  --fondo: #f4f5f7; --tarjeta: #ffffff; --texto: #1c1f23; --suave: #5f6670; --borde: #e2e5e9;
+  --acento: #0f766e; --acento-suave: #e0f2f0; --aviso: #b45309; --aviso-suave: #fef3c7;
+  --malo: #b91c1c; --malo-suave: #fee2e2; --bueno: #15803d; --bueno-suave: #dcfce7; --chip: #eef0f3;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #111315; --tarjeta: #1b1e21; --texto: #e8eaed; --suave: #9aa1a9; --borde: #2c3035;
+    --acento: #2dd4bf; --acento-suave: #12332f; --aviso: #fbbf24; --aviso-suave: #3a2c0b;
+    --malo: #f87171; --malo-suave: #3b1515; --bueno: #4ade80; --bueno-suave: #11301c; --chip: #262a2f;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--fondo); color: var(--texto);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+header { padding: 16px 16px 8px; max-width: 760px; margin: 0 auto; }
+header h1 { margin: 0; font-size: 22px; }
+header p { margin: 2px 0 0; color: var(--suave); font-size: 13px; }
+
+.filtros {
+  position: sticky; top: 0; z-index: 5; background: var(--fondo); border-bottom: 1px solid var(--borde);
+  padding: 8px 16px 10px;
+}
+.filtros.abierto { position: static; }
+.filtros > div { max-width: 760px; margin: 0 auto; }
+.fila { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.fila::-webkit-scrollbar { display: none; }
+.chip {
+  flex: none; border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto);
+  border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer;
+}
+.chip[aria-pressed="true"] { background: var(--acento); border-color: var(--acento); color: #fff; }
+@media (prefers-color-scheme: dark) { .chip[aria-pressed="true"] { color: #062421; } }
+.mas { margin-top: 8px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.mas[hidden] { display: none; }
+.mas label { font-size: 12px; color: var(--suave); display: flex; flex-direction: column; gap: 3px; }
+.mas select, .mas input[type="search"] {
+  font: inherit; font-size: 15px; color: var(--texto); background: var(--tarjeta);
+  border: 1px solid var(--borde); border-radius: 8px; padding: 7px 8px; width: 100%;
+}
+.mas .check { flex-direction: row; align-items: center; gap: 8px; font-size: 14px; color: var(--texto); }
+.mas .ancho { grid-column: 1 / -1; }
+.resumen-filtros { margin-top: 6px; font-size: 13px; color: var(--suave); display: flex; justify-content: space-between; }
+.resumen-filtros button { background: none; border: 0; color: var(--acento); font: inherit; padding: 0; cursor: pointer; }
+
+main { max-width: 760px; margin: 0 auto; padding: 12px 16px 40px; display: grid; gap: 14px; }
+.vacio { text-align: center; color: var(--suave); padding: 40px 0; }
+
+.tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; overflow: hidden; }
+.tarjeta.descartado { opacity: .55; }
+.galeria { position: relative; background: var(--chip); }
+.fotos { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; aspect-ratio: 4 / 3; }
+.fotos::-webkit-scrollbar { display: none; }
+.fotos img { flex: none; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; cursor: zoom-in; }
+.sin-foto { aspect-ratio: 16 / 7; display: grid; place-items: center; color: var(--suave); font-size: 13px; }
+.contador, .insignias {
+  position: absolute; display: flex; gap: 6px;
+}
+.contador { right: 8px; bottom: 8px; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+.flecha {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 1; width: 38px; height: 38px; border: 0;
+  border-radius: 999px; background: rgba(0,0,0,.55); color: #fff; font-size: 26px; line-height: 1; cursor: pointer;
+  display: grid; place-items: center; padding: 0 0 3px;
+}
+.flecha.ant { left: 8px; }
+.flecha.sig { right: 8px; }
+.flecha:disabled { opacity: 0; pointer-events: none; }
+.flecha:hover { background: rgba(0,0,0,.75); }
+.insignias { left: 8px; top: 8px; flex-wrap: wrap; }
+.insignia { font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: rgba(0,0,0,.65); color: #fff; }
+.insignia.nuevo { background: #0f766e; }
+.insignia.bajo { background: #92400e; }
+.insignia.retirado { background: #7f1d1d; }
+.insignia.sin-claude { background: #4b5563; }
+.insignia.bajada { background: #15803d; }
+.otras { width: 100%; font-size: 13px; background: var(--chip); border-radius: 8px; padding: 8px 10px; }
+.otras p { margin: 0 0 4px; color: var(--suave); font-size: 12px; }
+.otras ul { margin: 0; padding-left: 18px; }
+.otras a { color: var(--acento); }
+
+.cuerpo { padding: 12px 14px 14px; }
+.cabeza { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.precio { font-size: 22px; font-weight: 700; }
+.precio small { font-size: 13px; font-weight: 400; color: var(--suave); }
+.precio s { font-size: 15px; font-weight: 400; color: var(--suave); margin-right: 4px; }
+.puntaje {
+  flex: none; min-width: 48px; text-align: center; border-radius: 10px; padding: 4px 6px;
+  font-weight: 700; font-size: 18px; background: var(--acento-suave); color: var(--acento);
+}
+.puntaje span { display: block; font-size: 10px; font-weight: 500; }
+.titulo { margin: 4px 0 2px; font-size: 15px; font-weight: 600; }
+.lugar { margin: 0; color: var(--suave); font-size: 13px; }
+.datos { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.datos li { background: var(--chip); border-radius: 8px; padding: 3px 8px; font-size: 13px; }
+.datos li.si { background: var(--bueno-suave); color: var(--bueno); }
+.datos li.no { background: var(--malo-suave); color: var(--malo); }
+.datos li.duda { background: var(--aviso-suave); color: var(--aviso); }
+.ia { margin: 10px 0 0; font-size: 14px; }
+.alertas { margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; background: var(--aviso-suave); color: var(--aviso); font-size: 13px; }
+.alertas ul { margin: 0; padding-left: 18px; }
+details { margin-top: 8px; border-top: 1px solid var(--borde); padding-top: 8px; }
+summary { cursor: pointer; font-size: 14px; color: var(--acento); }
+.desc { white-space: pre-line; font-size: 14px; margin: 6px 0 0; overflow-wrap: anywhere; }
+.motivos { font-size: 13px; color: var(--suave); margin: 6px 0 0; }
+.pie { margin-top: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ver {
+  flex: 1 1 auto; text-align: center; background: var(--acento); color: #fff; text-decoration: none;
+  font-weight: 600; padding: 10px 12px; border-radius: 10px;
+}
+@media (prefers-color-scheme: dark) { .ver { color: #062421; } }
+.marcas { display: flex; gap: 6px; }
+.marca {
+  width: 42px; height: 42px; border-radius: 10px; border: 1px solid var(--borde); background: var(--tarjeta);
+  font-size: 18px; cursor: pointer; color: var(--suave);
+}
+.marca[aria-pressed="true"][data-marca="favorito"] { background: #fde68a; border-color: #f59e0b; color: #92400e; }
+.marca[aria-pressed="true"][data-marca="contactado"] { background: var(--bueno-suave); border-color: var(--bueno); color: var(--bueno); }
+.marca[aria-pressed="true"][data-marca="descartado"] { background: var(--malo-suave); border-color: var(--malo); color: var(--malo); }
+.meta { width: 100%; font-size: 12px; color: var(--suave); }
+.meta a { color: var(--acento); }
+
+.sync { max-width: 760px; margin: 0 auto; padding: 0 16px 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--suave); }
+.sync button, .panel-sync button {
+  border: 1px solid var(--borde); background: var(--tarjeta); color: var(--acento); border-radius: 999px;
+  padding: 5px 12px; font: inherit; font-size: 13px; cursor: pointer;
+}
+.panel-sync {
+  max-width: 728px; margin: 0 16px 8px; padding: 12px; background: var(--tarjeta); border: 1px solid var(--borde);
+  border-radius: 12px; font-size: 14px;
+}
+@media (min-width: 760px) { .panel-sync { margin: 0 auto 8px; } }
+.panel-sync p { margin: 0 0 8px; }
+.panel-sync .botones { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.panel-sync input {
+  flex: 1 1 200px; min-width: 0; width: 100%; padding: 8px; border: 1px solid var(--borde); border-radius: 8px;
+  background: var(--fondo); color: var(--texto); font: inherit; font-size: 13px;
+}
+.panel-sync .secundario { color: var(--suave); }
+.sync[hidden], .panel-sync[hidden] { display: none; }
+
+.visor { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.92); display: grid; place-items: center; }
+.visor[hidden] { display: none; }
+.visor img { width: 100%; height: 100%; object-fit: contain; }
+.visor .cerrar { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,.15); color: #fff; border: 0; border-radius: 999px; width: 40px; height: 40px; font-size: 20px; cursor: pointer; }
+.visor .flecha { width: 48px; height: 48px; font-size: 32px; background: rgba(255,255,255,.15); }
+.visor .contador { position: absolute; right: auto; left: 50%; bottom: 16px; transform: translateX(-50%); }
+.visor .contador[hidden] { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Depas Trujillo</h1>
+  <p id="actualizado">Cargando…</p>
+</header>
+<div class="sync" id="sync" hidden>
+  <span id="sync-estado"></span>
+  <button id="sync-boton" aria-controls="panel-sync"></button>
+</div>
+<div class="panel-sync" id="panel-sync" hidden></div>
+
+<div class="filtros">
+  <div>
+    <div class="fila" id="fechas" role="group" aria-label="Encontrados">
+      <button class="chip" data-dias="0">Hoy</button>
+      <button class="chip" data-dias="1">Ayer</button>
+      <button class="chip" data-dias="3">Últimos 3 días</button>
+      <button class="chip" data-dias="7">Última semana</button>
+      <button class="chip" data-dias="todo" aria-pressed="true">Todo</button>
+    </div>
+    <div class="mas" id="mas" hidden>
+      <label>Ordenar
+        <select id="orden">
+          <option value="puntaje">Mejor puntaje</option>
+          <option value="reciente">Más recientes</option>
+          <option value="precio">Precio más bajo</option>
+        </select>
+      </label>
+      <label>Habitaciones
+        <select id="habitaciones">
+          <option value="0">Todas</option>
+          <option value="3">3 o más</option>
+        </select>
+      </label>
+      <label>Precio hasta
+        <select id="precio">
+          <option value="0">Cualquiera</option>
+          <option value="1300">S/ 1,300</option>
+          <option value="1400">S/ 1,400</option>
+          <option value="1500">S/ 1,500</option>
+          <option value="1600">S/ 1,600</option>
+          <option value="1700">S/ 1,700</option>
+          <option value="1800">S/ 1,800</option>
+          <option value="1900">S/ 1,900</option>
+        </select>
+      </label>
+      <label>Tipo
+        <select id="tipo">
+          <option value="">Departamentos y casas</option>
+          <option value="departamento">Solo departamentos</option>
+          <option value="casa">Solo casas</option>
+        </select>
+      </label>
+      <label>Sitio
+        <select id="fuente"><option value="">Todos</option></select>
+      </label>
+      <label>Mis marcas
+        <select id="marca">
+          <option value="">Todos menos descartados</option>
+          <option value="favorito">★ Favoritos</option>
+          <option value="contactado">✓ Contactados</option>
+          <option value="sin">Sin marcar</option>
+          <option value="descartado">✕ Descartados</option>
+          <option value="todos">Todos</option>
+        </select>
+      </label>
+      <label>Buscar
+        <input type="search" id="buscar" placeholder="zona, palabra…">
+      </label>
+      <label class="check ancho"><input type="checkbox" id="mascotas"> Solo los que aceptan mascotas</label>
+      <label class="check ancho"><input type="checkbox" id="cochera"> Solo con cochera</label>
+      <label class="check ancho"><input type="checkbox" id="bajaron"> Solo los que bajaron de precio</label>
+      <label class="check ancho"><input type="checkbox" id="bajos"> Incluir los de bajo puntaje</label>
+    </div>
+    <div class="resumen-filtros">
+      <span id="cuenta"></span>
+      <button id="ver-mas" aria-expanded="false" aria-controls="mas">Más filtros</button>
+    </div>
+  </div>
+</div>
+
+<main id="lista"></main>
+
+<div class="visor" id="visor" hidden>
+  <img alt="">
+  <button class="flecha ant" aria-label="Foto anterior">‹</button>
+  <button class="flecha sig" aria-label="Foto siguiente">›</button>
+  <span class="contador"></span>
+  <button class="cerrar" aria-label="Cerrar">✕</button>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const CLAVE_MARCAS = "depas-marcas";
+const CLAVE_FILTROS = "depas-filtros";
+const CLAVE_TIEMPOS = "depas-marcas-tiempos";
+const CLAVE_CODIGO = "depas-codigo-sync";
+let DATOS = { anuncios: [] };
+let marcas = leer(CLAVE_MARCAS, {});
+// Cuándo cambió cada marca (también las quitadas), para que en la sincronización gane el cambio más reciente.
+let tiempos = leer(CLAVE_TIEMPOS, {});
+for (const c of Object.keys(marcas)) if (!tiempos[c]) tiempos[c] = 1;  // marcas de antes de sincronizar
+let codigo = leerCodigo();
+let FIREBASE = "", estadoSync = "";
+const filtros = Object.assign(
+  { dias: "todo", orden: "puntaje", habitaciones: "0", precio: "0", tipo: "", fuente: "", marca: "", buscar: "",
+    mascotas: false, cochera: false, bajos: false, bajaron: false },
+  leer(CLAVE_FILTROS, {})
+);
+
+function leer(clave, porDefecto) {
+  try { return JSON.parse(localStorage.getItem(clave)) || porDefecto; } catch { return porDefecto; }
+}
+function guardar(clave, valor) {
+  try { localStorage.setItem(clave, JSON.stringify(valor)); } catch {}
+}
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function soles(n) { return n ? "S/ " + Math.round(n).toLocaleString("es-PE") : ""; }
+function inicioDia(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+function diasDesde(iso, ref = new Date()) { return Math.round((inicioDia(ref) - inicioDia(new Date(iso))) / 864e5); }
+function cuando(iso) {
+  const d = diasDesde(iso);
+  if (d <= 0) return "hoy";
+  if (d === 1) return "ayer";
+  return `hace ${d} días`;
+}
+function fecha(iso) {
+  return new Date(iso).toLocaleString("es-PE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+const ETIQUETAS = {
+  mascotas: { si: ["si", "🐾 Acepta mascotas"], no: ["no", "🐾 No mascotas"], desconocido: ["duda", "🐾 Preguntar mascotas"] },
+  cochera: { si: ["si", "🚗 Con cochera"], opcional: ["si", "🚗 Cochera opcional"], no: ["", "🚗 Sin cochera"], desconocido: ["", "🚗 Preguntar cochera"] },
+  amoblado: { no: ["", "Sin amoblar"], semi: ["duda", "Semi amoblado"], si: ["no", "Amoblado"], desconocido: ["", ""] },
+};
+function etiqueta(campo, valor) {
+  const [clase, texto] = (ETIQUETAS[campo] || {})[valor] || ["", ""];
+  return texto ? `<li class="${clase}">${texto}</li>` : "";
+}
+
+function pasa(a) {
+  const marca = marcas[a.clave] || "";
+  if (filtros.marca === "" && marca === "descartado") return false;
+  if (filtros.marca === "sin" && marca) return false;
+  if (["favorito", "contactado", "descartado"].includes(filtros.marca) && marca !== filtros.marca) return false;
+  if (!filtros.bajos && a.estado === "bajo_puntaje") return false;
+  if (filtros.dias !== "todo") {
+    const d = diasDesde(a.visto_primera), n = Number(filtros.dias);
+    if (n === 0 && d !== 0) return false;
+    if (n === 1 && d !== 1) return false;
+    if (n > 1 && d >= n) return false;
+  }
+  if (Number(filtros.habitaciones) && (a.habitaciones || 0) < Number(filtros.habitaciones)) return false;
+  if (Number(filtros.precio) && a.precio && a.precio > Number(filtros.precio)) return false;
+  if (filtros.fuente && a.fuente !== filtros.fuente) return false;
+  if (filtros.tipo && (a.tipo || "departamento") !== filtros.tipo) return false;
+  if (filtros.mascotas && a.mascotas !== "si") return false;
+  if (filtros.cochera && !["si", "opcional"].includes(a.cochera)) return false;
+  if (filtros.bajaron && !bajada(a)) return false;
+  if (filtros.buscar) {
+    const t = [a.titulo, a.zona, a.ubicacion, a.descripcion, a.resumen].join(" ").toLowerCase();
+    const n = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "");
+    if (!n(t).includes(n(filtros.buscar.toLowerCase()))) return false;
+  }
+  return true;
+}
+
+// Precio anterior si bajó en las últimas 2 semanas (después ya es el precio normal).
+function bajada(a) {
+  return a.bajo_de && a.precio && a.precio < a.bajo_de && diasDesde(a.bajo_en) <= 14 ? a.bajo_de : 0;
+}
+
+function ordenar(lista) {
+  const f = {
+    puntaje: (a, b) => (b.puntaje || 0) - (a.puntaje || 0),
+    reciente: (a, b) => b.visto_primera.localeCompare(a.visto_primera),
+    precio: (a, b) => (a.precio || 1e9) - (b.precio || 1e9),
+  }[filtros.orden];
+  return lista.sort(f);
+}
+
+function otras(a) {
+  const lista = a.tambien_en || [];
+  if (!lista.length) return "";
+  const item = o => {
+    const precio = o.precio && o.precio !== a.precio ? ` · ${soles(o.precio)}` : "";
+    const quien = o.publicador ? ` (${esc(o.publicador)})` : "";
+    return `<li><a href="${esc(o.url)}" target="_blank" rel="noopener noreferrer">${esc(o.fuente)}${quien}</a>${precio}</li>`;
+  };
+  return `<div class="otras"><p>También publicado ${lista.length === 1 ? "en" : `${lista.length} veces más`}:</p>
+    <ul>${lista.map(item).join("")}</ul></div>`;
+}
+
+function tarjeta(a) {
+  const marca = marcas[a.clave] || "";
+  const antes = bajada(a);
+  const generado = new Date(DATOS.generado);
+  const retirado = diasDesde(a.visto_ultima, generado) >= 3;
+  const insignias = [
+    diasDesde(a.visto_primera) === 0 ? `<span class="insignia nuevo">Nuevo</span>` : "",
+    antes ? `<span class="insignia bajada">⬇ Bajó ${soles(antes - a.precio)}</span>` : "",
+    a.estado === "bajo_puntaje" ? `<span class="insignia bajo">Bajo puntaje</span>` : "",
+    retirado ? `<span class="insignia retirado">No visto desde ${cuando(a.visto_ultima)}</span>` : "",
+    a.sin_claude ? `<span class="insignia sin-claude">Sin revisar por Claude</span>` : "",
+  ].join("");
+  const fotos = a.fotos.length
+    ? `<div class="fotos">${a.fotos.map((f, i) => `<img src="${esc(f)}" loading="lazy" alt="Foto ${i + 1}">`).join("")}</div>
+       ${a.fotos.length > 1 ? `<span class="contador">1 / ${a.fotos.length}</span>
+         <button class="flecha ant" aria-label="Foto anterior" disabled>‹</button>
+         <button class="flecha sig" aria-label="Foto siguiente">›</button>` : ""}`
+    : `<div class="sin-foto">Sin fotos</div>`;
+  const datos = [
+    a.tipo === "casa" ? `<li>🏠 Casa</li>` : "",
+    a.habitaciones ? `<li>🛏 ${a.habitaciones} hab.</li>` : "",
+    a.banos ? `<li>🛁 ${a.banos} baño${a.banos > 1 ? "s" : ""}</li>` : "",
+    a.area ? `<li>📐 ${Math.round(a.area)} m²</li>` : "",
+    etiqueta("mascotas", a.mascotas),
+    etiqueta("cochera", a.cochera),
+    etiqueta("amoblado", a.amoblado),
+    a.zona_alejada ? `<li class="duda">📍 Zona alejada</li>` : "",
+  ].join("");
+  const alertas = a.alertas.length
+    ? `<div class="alertas">⚠️ <ul>${a.alertas.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
+  const boton = (m, icono, texto) =>
+    `<button class="marca" data-marca="${m}" aria-pressed="${marca === m}" aria-label="${texto}" title="${texto}">${icono}</button>`;
+  return `
+  <article class="tarjeta ${marca === "descartado" ? "descartado" : ""}" data-clave="${esc(a.clave)}">
+    <div class="galeria">${fotos}<div class="insignias">${insignias}</div></div>
+    <div class="cuerpo">
+      <div class="cabeza">
+        <div>
+          <div class="precio">${antes ? `<s>${soles(antes)}</s>` : ""}${soles(a.precio) || esc(a.precio_texto)}
+            ${a.mantenimiento ? `<small>+ ${soles(a.mantenimiento)} mant.</small>` : ""}</div>
+          <p class="titulo">${esc(a.titulo)}</p>
+          <p class="lugar">📍 ${esc(a.zona || a.ubicacion)}</p>
+        </div>
+        <div class="puntaje">${a.puntaje ?? "–"}<span>puntos</span></div>
+      </div>
+      <ul class="datos">${datos}</ul>
+      ${a.resumen && !a.resumen.startsWith("(") ? `<p class="ia">${esc(a.resumen)}</p>` : ""}
+      ${alertas}
+      <details>
+        <summary>Descripción completa</summary>
+        <p class="desc">${esc(a.descripcion) || "Sin descripción."}</p>
+        ${a.caracteristicas.length ? `<p class="motivos">${a.caracteristicas.map(esc).join(" · ")}</p>` : ""}
+        ${a.ubicacion && a.zona ? `<p class="motivos">Ubicación: ${esc(a.ubicacion)}</p>` : ""}
+        ${a.publicador ? `<p class="motivos">Publica: ${esc(a.publicador)}</p>` : ""}
+        <p class="motivos">Puntaje: ${a.motivos.map(esc).join(", ") || "–"}</p>
+      </details>
+      <div class="pie">
+        <a class="ver" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">Ver en ${esc(a.fuente)}</a>
+        <div class="marcas">
+          ${boton("favorito", "★", "Favorito")}${boton("contactado", "✓", "Contactado")}${boton("descartado", "✕", "Descartar")}
+        </div>
+        <div class="meta">Encontrado ${cuando(a.visto_primera)} (${fecha(a.visto_primera)})</div>
+        ${otras(a)}
+      </div>
+    </div>
+  </article>`;
+}
+
+function pintar() {
+  const lista = ordenar(DATOS.anuncios.filter(pasa));
+  $("#lista").innerHTML = lista.length ? lista.map(tarjeta).join("") : `<p class="vacio">No hay opciones con estos filtros.</p>`;
+  const total = DATOS.anuncios.filter(a => filtros.bajos || a.estado !== "bajo_puntaje").length;
+  $("#cuenta").textContent = `${lista.length} de ${total} opciones`;
+  document.querySelectorAll("#fechas .chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.dias === filtros.dias));
+  guardar(CLAVE_FILTROS, filtros);
+}
+
+function conectarFiltros() {
+  for (const id of ["orden", "habitaciones", "precio", "tipo", "fuente", "marca"]) {
+    $("#" + id).value = filtros[id];
+    $("#" + id).addEventListener("change", e => { filtros[id] = e.target.value; pintar(); });
+  }
+  for (const id of ["mascotas", "cochera", "bajos", "bajaron"]) {
+    $("#" + id).checked = filtros[id];
+    $("#" + id).addEventListener("change", e => { filtros[id] = e.target.checked; pintar(); });
+  }
+  $("#buscar").value = filtros.buscar;
+  $("#buscar").addEventListener("input", e => { filtros.buscar = e.target.value.trim(); pintar(); });
+  $("#fechas").addEventListener("click", e => {
+    const b = e.target.closest(".chip");
+    if (b) { filtros.dias = b.dataset.dias; pintar(); }
+  });
+  $("#ver-mas").addEventListener("click", e => {
+    const mas = $("#mas"), abrir = mas.hidden;
+    mas.hidden = !abrir;
+    document.querySelector(".filtros").classList.toggle("abierto", abrir);
+    e.target.setAttribute("aria-expanded", abrir);
+    e.target.textContent = abrir ? "Menos filtros" : "Más filtros";
+  });
+}
+
+$("#lista").addEventListener("click", e => {
+  const b = e.target.closest(".marca");
+  if (b) {
+    const clave = b.closest(".tarjeta").dataset.clave, m = b.dataset.marca;
+    if (marcas[clave] === m) delete marcas[clave]; else marcas[clave] = m;
+    tiempos[clave] = Date.now();
+    guardar(CLAVE_MARCAS, marcas);
+    guardar(CLAVE_TIEMPOS, tiempos);
+    pintar();
+    sincronizar();
+    return;
+  }
+  const flecha = e.target.closest(".galeria .flecha");
+  if (flecha) {
+    // Salto directo, sin animación: con varios clics seguidos la animación perdía o sumaba fotos.
+    const fotos = flecha.parentElement.querySelector(".fotos");
+    const actual = Math.round(fotos.scrollLeft / fotos.clientWidth);
+    const destino = Math.max(0, Math.min(fotos.children.length - 1, actual + (flecha.classList.contains("sig") ? 1 : -1)));
+    fotos.scrollLeft = destino * fotos.clientWidth;
+    return;
+  }
+  const img = e.target.closest(".fotos img");
+  if (img) abrirVisor([...img.parentElement.children].map(x => x.src), [...img.parentElement.children].indexOf(img));
+});
+// Con el mouse no se puede deslizar la galería: las flechas y el contador siguen la foto que se ve.
+$("#lista").addEventListener("scroll", e => {
+  const fotos = e.target;
+  if (!fotos.classList || !fotos.classList.contains("fotos")) return;
+  const i = Math.round(fotos.scrollLeft / fotos.clientWidth), n = fotos.children.length;
+  const galeria = fotos.parentElement;
+  const contador = galeria.querySelector(".contador");
+  if (contador) contador.textContent = `${i + 1} / ${n}`;
+  if (galeria.querySelector(".flecha")) {
+    galeria.querySelector(".flecha.ant").disabled = i <= 0;
+    galeria.querySelector(".flecha.sig").disabled = i >= n - 1;
+  }
+}, true);
+
+// Visor a pantalla completa: flechas, teclas ← → y deslizar con el dedo.
+const visor = { fotos: [], i: 0 };
+function abrirVisor(fotos, i) {
+  Object.assign(visor, { fotos, i });
+  mostrarVisor();
+  $("#visor").hidden = false;
+}
+function mostrarVisor() {
+  const n = visor.fotos.length;
+  $("#visor img").src = visor.fotos[visor.i];
+  $("#visor .contador").textContent = n > 1 ? `${visor.i + 1} / ${n}` : "";
+  $("#visor .contador").hidden = n <= 1;
+  $("#visor .flecha.ant").disabled = visor.i <= 0;
+  $("#visor .flecha.sig").disabled = visor.i >= n - 1;
+}
+function moverVisor(paso) {
+  const i = visor.i + paso;
+  if (i < 0 || i >= visor.fotos.length) return;
+  visor.i = i;
+  mostrarVisor();
+}
+$("#visor").addEventListener("click", e => {
+  const flecha = e.target.closest(".flecha");
+  if (flecha) moverVisor(flecha.classList.contains("sig") ? 1 : -1);
+  else $("#visor").hidden = true;
+});
+let toqueX = null;
+$("#visor").addEventListener("touchstart", e => { toqueX = e.touches[0].clientX; }, { passive: true });
+$("#visor").addEventListener("touchend", e => {
+  const dx = e.changedTouches[0].clientX - (toqueX ?? e.changedTouches[0].clientX);
+  if (Math.abs(dx) > 40) { moverVisor(dx < 0 ? 1 : -1); e.preventDefault(); }  // deslizar no cierra el visor
+  toqueX = null;
+});
+document.addEventListener("keydown", e => {
+  if ($("#visor").hidden) return;
+  if (e.key === "Escape") $("#visor").hidden = true;
+  if (e.key === "ArrowRight") moverVisor(1);
+  if (e.key === "ArrowLeft") moverVisor(-1);
+});
+
+// Sincronización de marcas con Firebase Realtime Database (API REST, sin librerías).
+// Cada persona guarda sus marcas bajo un código al azar; las reglas de Firebase no dejan listar los códigos,
+// así que solo quien tiene el enlace puede verlas o cambiarlas.
+function leerCodigo() {
+  const m = location.hash.match(/^#sync=([A-Za-z0-9_-]{20,64})$/);
+  if (m) {
+    guardar(CLAVE_CODIGO, m[1]);
+    history.replaceState(null, "", location.pathname + location.search);
+    return m[1];
+  }
+  return leer(CLAVE_CODIGO, "");
+}
+function nuevoCodigo() {
+  const b = crypto.getRandomValues(new Uint8Array(18));
+  return btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_");
+}
+const enlaceSync = () => location.origin + location.pathname + "#sync=" + codigo;
+const llave = c => c.replace(/[.#$\[\]\/]/g, "_");  // Firebase no acepta esos caracteres en las claves
+
+let cola = Promise.resolve();
+function sincronizar() {
+  cola = cola.then(sincronizarAhora);
+  return cola;
+}
+async function sincronizarAhora() {
+  if (!FIREBASE || !codigo) return pintarSync();
+  const url = `${FIREBASE.replace(/\/+$/, "")}/marcas/${codigo}.json`;
+  try {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    const remoto = (await r.json()) || {};
+    let cambio = false;
+    for (const v of Object.values(remoto)) {
+      if (!v || typeof v.c !== "string" || !(v.t > (tiempos[v.c] || 0))) continue;
+      tiempos[v.c] = v.t;
+      if (v.m) marcas[v.c] = v.m; else delete marcas[v.c];
+      cambio = true;
+    }
+    const subir = {};
+    for (const [c, t] of Object.entries(tiempos)) {
+      const v = remoto[llave(c)];
+      if (!v || t > v.t) subir[llave(c)] = { c, m: marcas[c] || "", t };
+    }
+    if (Object.keys(subir).length) {
+      const w = await fetch(url, { method: "PATCH", body: JSON.stringify(subir) });
+      if (!w.ok) throw new Error(w.status);
+    }
+    guardar(CLAVE_MARCAS, marcas);
+    guardar(CLAVE_TIEMPOS, tiempos);
+    estadoSync = "ok";
+    if (cambio) pintar();
+  } catch {
+    estadoSync = "error";  // lo pendiente queda en este dispositivo y se sube en el próximo intento
+  }
+  pintarSync();
+}
+
+function pintarSync() {
+  $("#sync").hidden = !FIREBASE;
+  if (!FIREBASE) return;
+  $("#sync-estado").textContent = !codigo ? "Tus marcas se guardan solo en este dispositivo."
+    : estadoSync === "error" ? "Sin conexión: tus marcas se sincronizan cuando vuelva."
+    : "★ ✓ ✕ sincronizadas en tus dispositivos.";
+  $("#sync-boton").textContent = codigo ? "Agregar otro dispositivo" : "Sincronizar";
+  $("#sync-boton").setAttribute("aria-expanded", !$("#panel-sync").hidden);
+}
+function abrirPanel() {
+  const p = $("#panel-sync");
+  p.innerHTML = codigo ? `
+    <p>Abre este enlace en tu celular o PC para ver las mismas marcas. Guárdalo en privado: quien lo tenga puede cambiarlas.</p>
+    <div class="botones"><input id="sync-enlace" readonly value="${esc(enlaceSync())}" aria-label="Enlace de sincronización"></div>
+    <div class="botones">
+      <button data-accion="copiar">Copiar enlace</button>
+      ${navigator.share ? `<button data-accion="compartir">Compartir</button>` : ""}
+      <button data-accion="salir" class="secundario">Dejar de sincronizar aquí</button>
+    </div>` : `
+    <p>¿Es el primer dispositivo? Empieza aquí y luego abre el enlace en los demás.</p>
+    <div class="botones"><button data-accion="empezar">Empezar aquí</button></div>
+    <p>¿Ya lo activaste en otro? Pega su enlace:</p>
+    <div class="botones">
+      <input id="sync-pegar" placeholder="https://…#sync=…" aria-label="Enlace del otro dispositivo">
+      <button data-accion="usar">Usar</button>
+    </div>`;
+  p.hidden = false;
+  pintarSync();
+}
+$("#sync-boton").addEventListener("click", () => {
+  if ($("#panel-sync").hidden) abrirPanel(); else { $("#panel-sync").hidden = true; pintarSync(); }
+});
+$("#panel-sync").addEventListener("click", async e => {
+  const accion = e.target.dataset.accion;
+  if (accion === "copiar") {
+    try { await navigator.clipboard.writeText(enlaceSync()); e.target.textContent = "Copiado ✓"; }
+    catch { $("#sync-enlace").select(); }
+    return;
+  }
+  if (accion === "compartir") { navigator.share({ title: "Depas Trujillo", url: enlaceSync() }).catch(() => {}); return; }
+  if (accion === "empezar") codigo = nuevoCodigo();
+  else if (accion === "usar") {
+    const m = $("#sync-pegar").value.trim().match(/(?:#sync=)?([A-Za-z0-9_-]{20,64})$/);
+    if (!m) { $("#sync-pegar").value = ""; $("#sync-pegar").placeholder = "Ese enlace no sirve, cópialo de nuevo"; return; }
+    codigo = m[1];
+  } else if (accion === "salir") codigo = "";
+  else return;
+  guardar(CLAVE_CODIGO, codigo);
+  estadoSync = "";
+  if (accion === "empezar") abrirPanel(); else $("#panel-sync").hidden = true;
+  pintarSync();
+  sincronizar();
+});
+document.addEventListener("visibilitychange", () => { if (!document.hidden) sincronizar(); });
+window.addEventListener("online", () => sincronizar());
+setInterval(() => { if (!document.hidden) sincronizar(); }, 30000);
+
+fetch("datos.json?v=" + Date.now())
+  .then(r => r.json())
+  .then(d => {
+    DATOS = d;
+    FIREBASE = d.firebase || "";
+    $("#actualizado").textContent = `Actualizado ${cuando(d.generado)}, ${fecha(d.generado)}`;
+    const fuentes = [...new Set(d.anuncios.map(a => a.fuente))].sort();
+    $("#fuente").insertAdjacentHTML("beforeend", fuentes.map(f => `<option>${esc(f)}</option>`).join(""));
+    conectarFiltros();
+    pintar();
+    sincronizar();
+  })
+  .catch(() => { $("#actualizado").textContent = "No se pudieron cargar los datos."; });
+</script>
+</body>
+</html>
